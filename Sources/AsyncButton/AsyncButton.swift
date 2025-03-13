@@ -11,7 +11,9 @@ public struct AsyncButton<Label> : View where Label : View {
     @State private var showingErrorAlert = false
     @State private var localizedError: AnyLocalizedError?
     
+    #if os(iOS)
     private let generator = UINotificationFeedbackGenerator()
+    #endif
     
     @State private var tint: Color?
     
@@ -45,9 +47,11 @@ public struct AsyncButton<Label> : View where Label : View {
                 }
                 operations.append(.loading(actionTask))
                 Task {
+#if os(iOS)
                     if options.contains(.enableNotificationFeedback) {
                         generator.prepare()
                     }
+#endif
                     let result = await actionTask.result
                     let index = operations.lastIndex { operation in
                         if case .loading(let task) = operation {
@@ -57,6 +61,7 @@ public struct AsyncButton<Label> : View where Label : View {
                         }
                     }
                     operations[index!] = .completed(actionTask, result)
+#if os(iOS)
                     if options.contains(.enableNotificationFeedback) {
                         switch result {
                         case .success:
@@ -65,6 +70,7 @@ public struct AsyncButton<Label> : View where Label : View {
                             generator.notificationOccurred(.error)
                         }
                     }
+#endif
                     if options.contains(.enableTintFeedback) {
                         withAnimation(.linear(duration: 0.1)) {
                             switch result {
